@@ -1,8 +1,95 @@
 import requests
 from bs4 import BeautifulSoup
-# import time
+
+def book_data(url):
+
+    r = requests.get(url)
+
+    if r.ok:
+        print("Connexion avec la page établie.")
+    else:
+        print("Connexion avec le site impossible. Veuillez réessayer plus tard.")
+
+    page = r.text
+    soup = BeautifulSoup(page, features="html.parser")
+
+    product_page_url = url
+    universal_product_code = soup.find("th", text="UPC").next_sibling.text
+    title = soup.find("div", {"class":"col-sm-6 product_main"}).find("h1").text
+    price_including_tax = soup.find("th", text="Price (incl. tax)").next_sibling.text
+    price_excluding_tax = soup.find("th", text="Price (excl. tax)").next_sibling.text
+    number_available = soup.find("th", text="Availability").next_sibling.next_sibling.text.split()[2][1:]
+    product_description = soup.find("div", {"id":"product_description"}).next_sibling.next_sibling.text
+    category = soup.find("ul", {"class":"breadcrumb"}).select("li > a", limit=3)[2].text
+    review_rating = soup.find("div", {"class": "col-sm-6 product_main"}).find("p",{"class":"star-rating"})["class"][1]
+    image_url = soup.find("div",{"class":"item active"}).find("img")["src"].replace("../..",url)
+
+    return (product_page_url + "\n" + universal_product_code + "\n" + title.replace(",","") + "\n" + price_including_tax + "\n" + price_excluding_tax + "\n" + number_available + "\n" + product_description.replace(",","") + "\n" + category + "\n" + review_rating + "\n" + image_url)
+
+# print(book_data("http://books.toscrape.com/catalogue/the-requiem-red_995/index.html"))
+
+# #with permet d'avoir la fermeture dynamique du fichier à la fin du bloc with
+# with open("Extraction.csv", "w") as extraction:
+#     extraction.write("product_page_url,universal_product_code,title,price_including_tax,price_excluding_tax,number_available,product_description,category,review_rating,image_url\n")
+#     extraction.write(product_page_url + "," + universal_product_code + "," + title.replace(",","") + "," + price_including_tax + "," + price_excluding_tax + "," + number_available + "," + product_description.replace(",","") + "," + category + "," + review_rating + "," + image_url)
+
+
+def categories_list(url):
+    r = requests.get(url)
+    if r.status_code != 200:
+        print("Site non disponible. Merci de réessayer plus tard.")
+    soup = BeautifulSoup(r.text, features="html.parser")
+    categories = soup.find("div",class_="side_categories").find("ul",class_="nav nav-list").text.replace(" ","").split("\n")
+    i = 0
+    return [category for category in categories if category != ""]
+
+def categories_count(url):
+    r = requests.get(url)
+    if r.status_code != 200:
+        print("Site non disponible. Merci de réessayer plus tard.")
+    soup = BeautifulSoup(r.text, features="html.parser")
+    categories = soup.find("div",class_="side_categories").find("ul",class_="nav nav-list").text.replace(" ","").split("\n")
+    return len([category for category in categories if category != "" and category != "Books"])
+
+# with open("Temp.txt", "w") as temp:
+#     temp.write(str(categories_count("http://books.toscrape.com/index.html")))
+#     temp.write(str(len(categories_count("http://books.toscrape.com/index.html"))))
+
+# for category in categories_list("http://books.toscrape.com/index.html"):
+#     if category == "Books":
+#         continue
+#     print(category)
 #
-url = "http://books.toscrape.com/"
+# print(categories_count("http://books.toscrape.com/index.html"))
+
+def books_count_by_category(category):
+    url = "http://books.toscrape.com/catalogue/category/books/"+category+"_31/index.html"
+    r = requests.get(url)
+    soup = BeautifulSoup(r.text,features="html.parser")
+    books_count = soup.find("form",class_="form-horizontal").find("strong").text
+    return books_count
+
+print(books_count_by_category("horror"))
+
+def books_url_by_category(category):
+    url = "http://books.toscrape.com/catalogue/category/books/"+category+"_31/index.html"
+    r = requests.get(url)
+    soup = BeautifulSoup(r.text,features="html.parser")
+    books_url = soup.find("ol",class_="row")
+    books_url = str(books_url.select("h3"))
+    debut = books_url.find("../")
+    fin = books_url.find(".html")
+    return "http://books.toscrape.com/catalogue"+books_url[debut+8:fin+5]
+
+print(books_url_by_category("horror"))
+
+def download_products_images():
+    pass
+
+
+# import time
+
+# url = "http://books.toscrape.com/"
 # r = requests.get(url)
 #
 # if r.ok:
@@ -54,46 +141,9 @@ url = "http://books.toscrape.com/"
 # time.sleep(1)
 #
 # print(books)
-#
+
 # #with permet d'avoir la fermeture dynamique du fichier à la fin du bloc with
 # with open("BookScraping.csv", "w") as extraction:
 #     for alt in books:
 #         extraction.write(alt + "\n")
-
-url2 = "http://books.toscrape.com/catalogue/1000-places-to-see-before-you-die_1/index.html"
-r2 = requests.get(url2)
-
-if r2.ok:
-    print("Connexion avec la page établie.")
-else:
-    print("Connexion avec le site impossible. Veuillez réessayer plus tard.")
-
-page2 = r2.text
-soup2 = BeautifulSoup(page2, features="html.parser")
-
-product_page_url = url2
-print(url2)
-universal_product_code = soup2.find("th", text="UPC").next_sibling.text
-print(universal_product_code)
-title = soup2.find("div", {"class":"col-sm-6 product_main"}).find("h1").text
-print(title)
-price_including_tax = soup2.find("th", text="Price (incl. tax)").next_sibling.text
-print(price_including_tax)
-price_excluding_tax = soup2.find("th", text="Price (excl. tax)").next_sibling.text
-print(price_excluding_tax)
-number_available = soup2.find("th", text="Availability").next_sibling.next_sibling.text.split()[2][1:]
-print(number_available)
-product_description = soup2.find("div", {"id":"product_description"}).next_sibling.next_sibling.text
-print(product_description)
-category = soup2.find("ul", {"class":"breadcrumb"}).select("li > a", limit=3)[2].text
-print(category)
-review_rating = soup2.find("div", {"class": "col-sm-6 product_main"}).find("p",{"class":"star-rating"})["class"][1]
-print(review_rating)
-image_url = soup2.find("div",{"class":"item active"}).find("img")["src"].replace("../..",url)
-print(image_url)
-
-#with permet d'avoir la fermeture dynamique du fichier à la fin du bloc with
-with open("Extraction.csv", "w") as extraction:
-    extraction.write("product_page_url,universal_product_code,title,price_including_tax,price_excluding_tax,number_available,product_description,category,review_rating,image_url\n")
-    extraction.write(product_page_url + "," + universal_product_code + "," + title.replace(",","") + "," + price_including_tax + "," + price_excluding_tax + "," + number_available + "," + product_description.replace(",","") + "," + category + "," + review_rating + "," + image_url)
 
