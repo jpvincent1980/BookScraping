@@ -1,3 +1,5 @@
 env/
+Images/
 *.csv
+*.jpg
 Temp.txt
