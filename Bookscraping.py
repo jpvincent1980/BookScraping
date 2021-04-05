@@ -11,7 +11,8 @@ forbiddencharacters = {60: None, 62: None, 58: None, 8220: None, 47: None, 92: N
 current_path = os.getcwd()
 
 def categories_list(url):
-    """ This function will return the list of categories with their name and url and create a directory in the /Export subfolder for each category. """
+    """ This function will return the list of categories with their name and url and create a directory in the /Export
+    subfolder for each category. """
     r = requests.get(url)
     if r.status_code != 200:
         print("Site non disponible. Merci de réessayer plus tard.")
@@ -28,7 +29,8 @@ def categories_list(url):
     return categories_dictionary
 
 def books_data(url):
-    """ This function will return book url, UPC, title, price including tax, price excluding tax, quantity available, description, category, rating and image url. """
+    """ This function will return book url, UPC, title, price including tax, price excluding tax, quantity available,
+    description, category, rating and image url. """
     r = requests.get(url)
     if r.status_code != 200:
         print("Connexion avec le site impossible. Veuillez réessayer plus tard.")
@@ -63,7 +65,8 @@ def books_data(url):
         return book_dict
 
 def books_data_by_category(category):
-    """ This function will return requested data from all books belonging to the category called in the function and save them in one csv file by the name of the category in a subfolder by the name of the category. """
+    """ This function will return requested data from all books belonging to the category called in the function and
+    save them in one csv file by the name of the category in a subfolder by the name of the category. """
     url = categories_list("http://books.toscrape.com/index.html").get(category)
     r = requests.get(url)
     soup = BeautifulSoup(r.text, features="html.parser")
@@ -75,8 +78,7 @@ def books_data_by_category(category):
         for i in range(books_number):
             books_dict = {}
             books_name = soup.find("ol", class_="row").findAll("li")[i].find("h3").text.replace(",", "").strip()
-            books_url = soup.find("ol", class_="row").findAll("li")[i].find("a")["href"].replace("../../..",
-                                                                                                 "http://books.toscrape.com/catalogue")
+            books_url = soup.find("ol", class_="row").findAll("li")[i].find("a")["href"].replace("../../..","http://books.toscrape.com/catalogue")
             books_dict["books_title"] = books_name
             books_dict["books_url"] = books_url
             books_list.append(books_dict)
@@ -92,8 +94,7 @@ def books_data_by_category(category):
             for i in range(books_number):
                 books_dict = {}
                 books_name = soup.find("ol", class_="row").findAll("li")[i].find("h3").text.replace(",", "").strip()
-                books_url = soup.find("ol", class_="row").findAll("li")[i].find("a")["href"].replace("../../..",
-                                                                                                     "http://books.toscrape.com/catalogue")
+                books_url = soup.find("ol", class_="row").findAll("li")[i].find("a")["href"].replace("../../..","http://books.toscrape.com/catalogue")
                 books_dict["books_title"] = books_name
                 books_dict["books_url"] = books_url
                 books_list.append(books_dict)
@@ -113,13 +114,14 @@ def books_data_by_category(category):
         writer.writeheader()
         writer.writerows(books_data_list)
 
-    print("Les données de tous les livres appartenant à la catégorie " + category.translate(
-        forbiddencharacters) + " ont été exportées dans le fichier " + category.translate(
-        forbiddencharacters) + ".csv créé dans le répertoire /" + category.translate(forbiddencharacters))
+    print("Les données et les images de tous les livres appartenant à la catégorie " + category.translate(
+        forbiddencharacters) + " ont été exportées dans le  répertoire /Export/" + category.translate(forbiddencharacters))
     return
 
 def all_books_data():
-    """ This function will return book url, UPC, title, price including tax, price excluding tax, quantity available, description, category, rating and image url for all books sold on the website and export those data in csv files by the name of the categories to whoch books belong and saved in directories by the name of each category. """
+    """ This function will return book url, UPC, title, price including tax, price excluding tax, quantity available,
+    description, category, rating and image url for all books sold on the website and export those data in csv files by
+    the name of the categories to whoch books belong and saved in directories by the name of each category. """
     url = "http://books.toscrape.com/"
     categories_dictionary = categories_list(url)
     for category in categories_dictionary.keys():
