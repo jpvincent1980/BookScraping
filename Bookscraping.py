@@ -17,26 +17,27 @@ def books_data_without_export(url):
         page = r.text
         soup = BeautifulSoup(page, features="html.parser")
 
+        universal_product_code = (soup.find("th", text="UPC").next_sibling.text if soup.find("th", text="UPC").next_sibling else "")
+        title = (soup.find("div", {"class":"col-sm-6 product_main"}).find("h1").text if soup.find("div", {"class":"col-sm-6 product_main"}).find("h1") else "")
+        price_including_tax = (soup.find("th", text="Price (incl. tax)").next_sibling.text[1:] if soup.find("th", text="Price (incl. tax)").next_sibling else "")
+        price_excluding_tax = (soup.find("th", text="Price (excl. tax)").next_sibling.text[1:] if soup.find("th", text="Price (excl. tax)").next_sibling else "")
+        number_available = (soup.find("th", text="Availability").next_sibling.next_sibling.text.split()[2][1:] if soup.find("th", text="Availability").next_sibling.next_sibling else "")
+        product_description = (soup.find("div", {"id":"product_description"}).next_sibling.next_sibling.text.replace(",","") if soup.find("div", {"id":"product_description"}) else "")
+        category = (soup.find("ul", {"class":"breadcrumb"}).select("li > a", limit=3)[2].text if soup.find("ul", {"class":"breadcrumb"}) else "")
+        review_rating = (soup.find("div", {"class": "col-sm-6 product_main"}).find("p",{"class":"star-rating"})["class"][1] if soup.find("div", {"class": "col-sm-6 product_main"}).find("p",{"class":"star-rating"}) else "")
+        image_url = (soup.find("div",{"class":"item active"}).find("img")["src"].replace("../..","http://books.toscrape.com/") if soup.find("div",{"class":"item active"}).find("img") else "")
+
         book_dict = {}
         book_dict["product_page_url"] = url
-        book_dict["universal_product_code"] = (soup.find("th", text="UPC").next_sibling.text \
-                                                   if soup.find("th", text="UPC").next_sibling else "UPC non disponible.")
-        book_dict["title"] = (soup.find("div", {"class":"col-sm-6 product_main"}).find("h1").text \
-                                  if soup.find("div", {"class":"col-sm-6 product_main"}).find("h1") else "Titre non disponible.")
-        book_dict["price_including_tax"] = (soup.find("th", text="Price (incl. tax)").next_sibling.text \
-                                                if soup.find("th", text="Price (incl. tax)").next_sibling else "Prix TTC non disponible.")
-        book_dict["price_excluding_tax"] = (soup.find("th", text="Price (excl. tax)").next_sibling.text \
-                                                if soup.find("th", text="Price (excl. tax)").next_sibling else "Prix HT non disponible.")
-        book_dict["number_available"] = (soup.find("th", text="Availability").next_sibling.next_sibling.text.split()[2][1:] \
-                                             if soup.find("th", text="Availability").next_sibling.next_sibling else "Quantité non disponible.")
-        book_dict["product_description"] = (soup.find("div", {"id":"product_description"}).next_sibling.next_sibling.text.replace(",","") \
-                                                if soup.find("div", {"id":"product_description"}) else "Description non disponible.")
-        book_dict["category"] = (soup.find("ul", {"class":"breadcrumb"}).select("li > a", limit=3)[2].text \
-                                     if soup.find("ul", {"class":"breadcrumb"}) else "Catégorie non disponible.")
-        book_dict["review_rating"] = (soup.find("div", {"class": "col-sm-6 product_main"}).find("p",{"class":"star-rating"})["class"][1] \
-                                          if soup.find("div", {"class": "col-sm-6 product_main"}).find("p",{"class":"star-rating"}) else "Note non disponible.")
-        book_dict["image_url"] = (soup.find("div",{"class":"item active"}).find("img")["src"].replace("../..","http://books.toscrape.com/") \
-                                      if soup.find("div",{"class":"item active"}).find("img") else "Image non disponible.")
+        book_dict["universal_product_code"] = universal_product_code
+        book_dict["title"] = title
+        book_dict["price_including_tax"] = price_including_tax
+        book_dict["price_excluding_tax"] = price_excluding_tax
+        book_dict["number_available"] = number_available
+        book_dict["product_description"] = product_description
+        book_dict["category"] = category
+        book_dict["review_rating"] = review_rating
+        book_dict["image_url"] = image_url
 
         return book_dict
 
@@ -47,10 +48,10 @@ def export_books_data(dictionary):
     current_path = os.getcwd()
 
     # Checks if a directory by the name of the books category already exists and if not, creates one
-    if not os.path.exists(current_path + "\\" + dictionary["category"].translate(forbiddencharacters)):
-        os.makedirs(current_path + "\\" + dictionary["category"].translate(forbiddencharacters))
+    if not os.path.exists(current_path + "/Export/" + dictionary["category"].translate(forbiddencharacters)):
+        os.makedirs(current_path + "/Export/" + dictionary["category"].translate(forbiddencharacters))
 
-    with open(current_path + "\\" + dictionary["category"].translate(forbiddencharacters) + "\\" + dictionary[
+    with open(current_path + "/Export/" + dictionary["category"].translate(forbiddencharacters) + "/" + dictionary[
         "title"].translate(forbiddencharacters) + ".csv", "w", newline="", encoding="utf-8") as csvfile:
         columns = ["product_page_url", "universal_product_code", "title", "price_including_tax", "price_excluding_tax",
                    "number_available", "product_description", "category", "review_rating", "image_url"]
@@ -158,11 +159,11 @@ def export_books_data_by_category(books_data_list):
     current_path = os.getcwd()
 
     # Checks if a directory by the name of the books category already exists and if not, creates one
-    if not os.path.exists(current_path + "\\" + category.translate(forbiddencharacters)):
-        os.makedirs(current_path + "\\" + category.translate(forbiddencharacters))
+    if not os.path.exists(current_path + "/Export/" + category.translate(forbiddencharacters)):
+        os.makedirs(current_path + "/Export/" + category.translate(forbiddencharacters))
 
     # Exports the list of books names and urls to a csv file with the name of category
-    with open(current_path + "\\" + category + "\\" + category + ".csv", "w", newline="", encoding="utf-8") as csvfile:
+    with open(current_path + "/Export/" + category + "/" + category + ".csv", "w", newline="", encoding="utf-8") as csvfile:
         columns = ["product_page_url", "universal_product_code", "title", "price_including_tax", "price_excluding_tax",
                    "number_available", "product_description", "category", "review_rating", "image_url"]
         writer = csv.DictWriter(csvfile, fieldnames=columns)
@@ -228,16 +229,14 @@ def download_all_products_images(url):
             # Retrieve current directory path
             current_path = os.getcwd()
             # Check if a directory by the name of the books category already exists and if not, creates one
-            if not os.path.exists(current_path + "\\" + category.translate(forbiddencharacters)):
-                os.makedirs(current_path + "\\" + category.translate(forbiddencharacters))
-            urllib.request.urlretrieve(picture_url, current_path + "\\" + category.translate(forbiddencharacters) + "\\" + picture_url.split("/")[-1])
+            if not os.path.exists(current_path + "/Export/" + category.translate(forbiddencharacters)):
+                os.makedirs(current_path + "/Export/" + category.translate(forbiddencharacters))
+            urllib.request.urlretrieve(picture_url, current_path + "/Export/" + category.translate(forbiddencharacters) + "/" + picture_url.split("/")[-1])
             a += 1
             print("Téléchargement de l'image " + str(a))
     print("** Fin du traitement **")
 
-# books_data("http://books.toscrape.com/catalogue/a-light-in-the-attic_1000/index.html")
+books_data("http://books.toscrape.com/catalogue/a-light-in-the-attic_1000/index.html")
 # books_data_by_category("poetry")
 # books_data_by_website("http://books.toscrape.com/")
 # download_all_products_images("http://books.toscrape.com/")
-
-help(download_all_products_images)
