@@ -7,8 +7,8 @@ import os
 
 forbiddencharacters = {60: None, 62: None, 58: None, 8220: None, 47: None, 92: None, 124: None, 63: None, 42: None, 46: None, 39: None, 34: None}
 
-# Retrieves requested data from a specific book as a dictionary
 def books_data_without_export(url):
+    """ This function will return book url, UPC, title, price including tax, price excluding tax, quantity available, description, category, rating and image url. """
 
     r = requests.get(url)
     if r.status_code != 200:
@@ -40,8 +40,9 @@ def books_data_without_export(url):
 
         return book_dict
 
-# Exports book data in a csv file stored in a directory by the name of the book category
 def export_books_data(dictionary):
+    """ This function will export book url, UPC, title, price including tax, price excluding tax, quantity available, description, category, rating and image url in a csv file by the name of the book and saved in adirectory by the name of the category to which the book belongs to. """
+
     # Retrieve current directory path
     current_path = os.getcwd()
 
@@ -59,14 +60,14 @@ def export_books_data(dictionary):
 
     print("Le fichier " + dictionary["title"].translate(forbiddencharacters) + ".csv vient d'être créé dans le répertoire /" + dictionary["category"].translate(forbiddencharacters) + ".")
 
-# Retrieves requested data from a specific book as a dictionary and exports them in a csv file
 def books_data(url):
+    """ This function will return book url, UPC, title, price including tax, price excluding tax, quantity available, description, category, rating and image url and export those data in a csv file by the name of the book title. """
     book_dict = books_data_without_export(url)
     export_books_data(book_dict)
     return
 
-# Retrieves the list of books categories from the website as a dictionary with category_name as key and category_url as value
 def categories_list(url):
+    """ This function will return the list of categories with their name and url existing on the website. """
     r = requests.get(url)
     if r.status_code != 200:
         print("Site non disponible. Merci de réessayer plus tard.")
@@ -79,9 +80,8 @@ def categories_list(url):
         categories_dictionary[category_name] = category_url
     return categories_dictionary
 
-
-# Retrieves the total number of categories
 def categories_count(url):
+    """ This function will return the number of categories existing on the website called by the function. """
     r = requests.get(url)
     if r.status_code != 200:
         print("Site non disponible. Merci de réessayer plus tard.")
@@ -89,8 +89,8 @@ def categories_count(url):
     categories = soup.find("div",class_="side_categories").find("ul",class_="nav nav-list").text.replace(" ","").split("\n")
     return len([category for category in categories if category != "" and category != "Books"])
 
-# Retrieves total count of books for a specific category
 def books_count_by_category(category):
+    """ This function will return the number of books for the category called by the function. """
     category = category.capitalize()
     url = categories_list("http://books.toscrape.com/index.html").get(category)
     r = requests.get(url)
@@ -98,10 +98,8 @@ def books_count_by_category(category):
     books_count = soup.find("form",class_="form-horizontal").find("strong").text
     return books_count
 
-# Retrieves all books urls belonging to a specific category and exports them in a single csv file by the name of the category within the category directory
 def books_data_by_category_without_export(category):
-    # category = category.capitalize()
-    # for category in categories_list("http://books.toscrape.com/index.html").keys()
+    """ This function will return book title and url for all books belonging to the category called in this function. """
     check = 0
     for element in categories_list("http://books.toscrape.com/index.html"):
         if element.lower() == category.lower():
@@ -152,9 +150,8 @@ def books_data_by_category_without_export(category):
 
         return books_data_list
 
-
-# Exports them in a single csv file by the name of the category within the category directory
 def export_books_data_by_category(books_data_list):
+    """ This function will export book title and url of the list of books called by this function in a csv file by the name of the category and saved in a directory by the name of the category. """
     category = books_data_list[0]["category"]
 
     # Retrieves current directory path
@@ -174,42 +171,43 @@ def export_books_data_by_category(books_data_list):
 
     print("Les données de tous les livres appartenant à la catégorie " + category.translate(forbiddencharacters) + " ont été exportées dans le fichier " + category.translate(forbiddencharacters) + ".csv créé dans le répertoire /" + category.translate(forbiddencharacters))
 
-# Retrieves all books urls belonging to a specific category and exports them in a single csv file by the name of the category within the category directory
 def books_data_by_category(category):
+    """ This function will return book title and url for all books belonging to the category called in this function and exports them in a csv file by the name of the category and saved in a directory by the name of the category. """
     books_list = books_data_by_category_without_export(category)
     if books_list is None:
         print("** Fin du traitement **")
     else:
         export_books_data_by_category(books_list)
 
-# Retrieves product image url from product page
 def products_images_url(url):
+    """ This function will return the image url of the book which url is called by the function. """
     r = requests.get(url)
     soup = BeautifulSoup(r.text,features="html.parser")
     image_url = soup.find("div",class_="item active").find("img")["src"].replace("../..","http://books.toscrape.com")
     return image_url
 
-# Retrieves image size from image url
 def products_image_size(url):
+    """ This function will return the size in Ko of the image which url is called by the function. """
     r = requests.head(url)
     image_size = r.headers["Content-Length"]
     image_size = str(int(image_size)/100)
     return image_size + " Ko"
 
-# Downloads product image from website to the working directory
 def download_products_images(url):
+    """ This function will download the image from the url called by this function. """
     urllib.request.urlretrieve(url,url.split("/")[-1])
     return
 
 def books_data_by_website_without_export(url):
+    """ This function will return book url, UPC, title, price including tax, price excluding tax, quantity available, description, category, rating and image url for all books sold on the website. """
     categories_dictionary = categories_list(url)
     url_list = []
     for category in categories_dictionary.keys():
         url_list.append(books_data_by_category_without_export(category))
     return url_list
 
-# Downloads data from all books from the website
 def books_data_by_website(url):
+    """ This function will return book url, UPC, title, price including tax, price excluding tax, quantity available, description, category, rating and image url for all books sold on the website and export those data in csv files by the name of the categories to whoch books belong and saved in directories by the name of each category. """
     categories_dictionary = categories_list(url)
     url_list = []
     for category in categories_dictionary.keys():
@@ -218,8 +216,8 @@ def books_data_by_website(url):
     print("** Fin du traitement  ")
     return url_list
 
-# Downloads all products pictures from the website
 def download_all_products_images(url):
+    """ This function will download all books images from the website and save them in directories by the name of the category to which books belong to. """
     print("Chargement en cours ...")
     a = 0
     allbooks = books_data_by_website_without_export(url)
@@ -241,3 +239,5 @@ def download_all_products_images(url):
 # books_data_by_category("poetry")
 # books_data_by_website("http://books.toscrape.com/")
 # download_all_products_images("http://books.toscrape.com/")
+
+help(download_all_products_images)
